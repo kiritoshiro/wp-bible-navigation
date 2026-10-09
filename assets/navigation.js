@@ -21,7 +21,7 @@
     var box = document.createElement('div');
     var video = link.getAttribute('data-video') || '';
     var list = link.getAttribute('data-list') || '';
-    var audio = link.getAttribute('data-audio') || '';
+    var audio = link.parentNode.querySelector('template.bnav-audio');
     box.className = 'bnav-player';
     if ((video && ID.test(video)) || (list && ID.test(list))) {
       var frame = document.createElement('iframe');
@@ -36,13 +36,11 @@
       box.appendChild(frame);
       return box;
     }
-    if (/^https?:\/\//i.test(audio)) {
-      var sound = document.createElement('audio');
-      sound.controls = true;
-      sound.preload = 'none';
-      sound.src = audio;
-      box.appendChild(sound);
-      var played = sound.play();
+    if (audio && audio.content) {
+      // The server rendered (and escaped) the player; a <template> stays inert until cloned.
+      box.appendChild(audio.content.cloneNode(true));
+      var sound = box.querySelector('audio');
+      var played = sound ? sound.play() : null;
       if (played && played.catch) {
         played.catch(function () {});
       }

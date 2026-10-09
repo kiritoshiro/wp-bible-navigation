@@ -434,7 +434,9 @@ final class Bible_Navigation {
 			return '<a class="bnav-open" href="' . esc_url( $entry['href'] ) . '" data-video="' . esc_attr( $entry['video'] ) . '" data-list="' . esc_attr( $entry['list'] ) . '" aria-expanded="false">' . $title . '</a>';
 		}
 		if ( 'audio' === $entry['type'] ) {
-			$html = '<a class="bnav-open" href="' . esc_url( $entry['src'] ) . '" data-audio="' . esc_url( $entry['src'] ) . '" aria-expanded="false">' . $title . '</a>';
+			// The player waits, inert, in a <template> until the title is clicked.
+			$html = '<a class="bnav-open" href="' . esc_url( $entry['src'] ) . '" data-audio="1" aria-expanded="false">' . $title . '</a>'
+				. '<template class="bnav-audio"><audio controls preload="none" src="' . esc_url( $entry['src'] ) . '"></audio></template>';
 			if ( '' !== $entry['link'] ) {
 				$html .= ' <a class="bnav-source" href="' . esc_url( $entry['link'] ) . '" target="_blank" rel="noopener">' . esc_html__( 'source', 'wp-bible-navigation' ) . '</a>';
 			}

@@ -119,13 +119,13 @@ $html = Bible_Navigation::build(
 	)
 );
 check( false === strpos( $html, '<script>' ) && false !== strpos( $html, '&lt;script&gt;' ), 'titles escaped' );
-check( false === strpos( $html, '<iframe' ) && false === strpos( $html, '<audio' ), 'no player or third-party request before a click' );
+check( false === strpos( $html, '<iframe' ) && substr_count( $html, '<audio' ) === substr_count( $html, '<template class="bnav-audio"><audio' ), 'no player or third-party request before a click (audio only inside inert templates)' );
 check( false !== strpos( $html, 'href="#pradzios-knyga">Pradžios knyga <span class="bnav-count">3</span>' ), 'book count in contents' );
 check( false !== strpos( $html, '<details class="bnav-book" id="pradzios-knyga">' ), 'old anchor kept as the book id' );
 check( false !== strpos( $html, 'id="penkiaknyge-turinys"' ) && false !== strpos( $html, 'id="senasis-testamentas"' ), 'old group and testament anchors kept' );
 check( false !== strpos( $html, '<span class="bnav-chip is-empty">Teisėjų knyga</span>' ), 'empty book shown, not linked' );
 check( false !== strpos( $html, 'data-video="C2qkbYzbnOM" data-list="PLjcvwNsWxJC51yIeFo9i4nwSac_SsDNfB"' ), 'video data' );
-check( false !== strpos( $html, 'data-audio="https://example.test/a.m4a"' ), 'audio data' );
+check( false !== strpos( $html, '<template class="bnav-audio"><audio controls preload="none" src="https://example.test/a.m4a"></audio></template>' ), 'audio player template' );
 check( false !== strpos( $html, '<span class="bnav-host">dievozodis.lt</span>' ), 'external article shows its site' );
 check( false !== strpos( $html, '<li class="bnav-item is-article"><a href="https://example.test/post/">Vietinis įrašas</a></li>' ), 'local article: same tab, no site label' );
 check( false !== strpos( $html, 'class="bnav-source" href="https://podcasters.spotify.com/x" target="_blank" rel="noopener"' ), 'audio source link' );

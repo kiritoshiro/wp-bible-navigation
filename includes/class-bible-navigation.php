@@ -285,7 +285,6 @@ final class Bible_Navigation {
 				'numberposts'      => self::MAX,
 				'orderby'          => array( 'menu_order' => 'ASC', 'ID' => 'ASC' ),
 				'no_found_rows'    => true,
-				'suppress_filters' => true,
 			)
 		);
 		foreach ( $items as $post ) {
@@ -305,7 +304,6 @@ final class Bible_Navigation {
 				'order'                  => 'DESC',
 				'no_found_rows'          => true,
 				'update_post_meta_cache' => false,
-				'suppress_filters'       => true,
 				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Cached; runs only after a change.
 				'tax_query'              => array(
 					array(

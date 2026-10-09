@@ -1,0 +1,192 @@
+/* Bible navigation: contents with counts, then one collapsible list per book. */
+.bnav {
+  --bnav-accent: #1c3d5a;
+  --bnav-soft: rgba(28, 61, 90, 0.08);
+  --bnav-line: rgba(0, 0, 0, 0.12);
+  --bnav-muted: rgba(0, 0, 0, 0.45);
+}
+
+.bnav-toc {
+  margin-bottom: 2.5rem;
+}
+
+.bnav-testament + .bnav-testament {
+  margin-top: 2rem;
+}
+
+.bnav .bnav-testament-title {
+  margin: 0 0 0.75rem;
+}
+
+.bnav .bnav-group-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--bnav-accent);
+}
+
+.bnav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bnav-chips li {
+  margin: 0;
+}
+
+.bnav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem 0.35rem 0.75rem;
+  border: 1px solid var(--bnav-line);
+  border-radius: 999px;
+  line-height: 1.3;
+  text-decoration: none;
+}
+
+a.bnav-chip:hover,
+a.bnav-chip:focus-visible {
+  border-color: var(--bnav-accent);
+  background: var(--bnav-soft);
+}
+
+.bnav-chip.is-empty {
+  padding-right: 0.75rem;
+  color: var(--bnav-muted);
+  border-style: dashed;
+}
+
+.bnav-count {
+  min-width: 1.6em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--bnav-accent);
+  color: #fff;
+  font-size: 0.8em;
+  font-weight: 600;
+  text-align: center;
+}
+
+.bnav-books .bnav-testament-title {
+  margin-top: 2.5rem;
+}
+
+.bnav-book {
+  border-bottom: 1px solid var(--bnav-line);
+}
+
+.bnav-book summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.bnav-book summary::-webkit-details-marker {
+  display: none;
+}
+
+.bnav-book summary::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+
+.bnav-book[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.bnav .bnav-book-title {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.bnav-book-body {
+  padding: 0 0 1rem 1.25rem;
+}
+
+.bnav .bnav-type {
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bnav-muted);
+}
+
+.bnav-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bnav-item {
+  margin: 0;
+  padding: 0.35rem 0 0.35rem 1.6rem;
+  position: relative;
+}
+
+.bnav-item::before {
+  position: absolute;
+  left: 0;
+  width: 1.2rem;
+  text-align: center;
+  color: var(--bnav-accent);
+}
+
+.bnav-item.is-video::before {
+  content: "\25B6";
+  font-size: 0.8em;
+  line-height: 2;
+}
+
+.bnav-item.is-audio::before {
+  content: "\266A";
+}
+
+.bnav-item.is-article::before {
+  content: "\2197";
+}
+
+.bnav-source,
+.bnav-host {
+  font-size: 0.85em;
+  color: var(--bnav-muted);
+}
+
+.bnav-player {
+  margin: 0.5rem 0 0.25rem;
+  max-width: 720px;
+}
+
+.bnav-player.is-video {
+  aspect-ratio: 16 / 9;
+}
+
+.bnav-player iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.bnav-player audio {
+  width: 100%;
+}
+
+.bnav .bnav-back {
+  margin: 0.75rem 0 0;
+  font-size: 0.85em;
+}

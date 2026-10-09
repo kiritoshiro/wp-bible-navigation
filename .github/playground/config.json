@@ -1,0 +1,39 @@
+{
+  "mounts": [
+    {
+      "host": ".",
+      "vfs": "/wordpress/wp-content/plugins/wp-bible-navigation"
+    }
+  ],
+  "plugins": [
+    "wp-bible-navigation/wp-bible-navigation.php"
+  ],
+  "watch": [
+    "/wordpress/wp-content/plugins/wp-bible-navigation/"
+  ],
+  "after": [
+    {
+      "step": "runPHP",
+      "code": "<?php require '/wordpress/wp-load.php'; Bible_Navigation::seed_books(); $term = get_term_by('slug', 'pradzios-knyga', 'bnav_book'); if (! $term) { throw new Exception('book terms were not created'); } $id = wp_insert_post(['post_type' => 'bnav_item', 'post_status' => 'publish', 'post_title' => 'Smoke video <b>1</b>']); update_post_meta($id, '_bnav_url', 'https://www.youtube.com/watch?v=C2qkbYzbnOM'); wp_set_object_terms($id, (int) $term->term_id, 'bnav_book'); $post = wp_insert_post(['post_type' => 'post', 'post_status' => 'publish', 'post_title' => 'Smoke article']); wp_set_object_terms($post, (int) $term->term_id, 'bnav_book'); $found = Bible_Navigation_Admin::collect('<!-- wp:heading {\"level\":4} --><h4 class=\"wp-block-heading\">Kunigų knyga</h4><!-- /wp:heading --><!-- wp:embed {\"url\":\"https://dievozodis.lt/pradzia-2022-ii/\"} --><figure class=\"wp-block-embed\"><div class=\"wp-block-embed__wrapper\">https://dievozodis.lt/pradzia-2022-ii/</div></figure><!-- /wp:embed -->'); if (1 !== count($found) || 'kunigu-knyga' !== $found[0]['book']) { throw new Exception('importer did not read real block markup'); } if (66 !== (int) wp_count_terms(['taxonomy' => 'bnav_book', 'hide_empty' => false])) { throw new Exception('expected 66 book terms'); }"
+    },
+    {
+      "step": "runPHP",
+      "code": "<?php require '/wordpress/wp-load.php'; add_filter('determine_locale', function () { return 'lt_LT'; }); add_filter('plugin_locale', function () { return 'lt_LT'; }); unload_textdomain('wp-bible-navigation'); Bible_Navigation::load_translations(); if ('Greitas pridėjimas' !== __('Quick add', 'wp-bible-navigation')) { throw new Exception('Lithuanian translation did not load'); }"
+    }
+  ],
+  "fixture": "<!-- wp:bible-navigation/books /-->\n<!-- wp:shortcode -->[bible_navigation show_empty=\"0\"]<!-- /wp:shortcode -->",
+  "expect": [
+    "<nav class=\"bnav-toc\"",
+    "href=\"#pradzios-knyga\">Pradžios knyga <span class=\"bnav-count\">2</span>",
+    "data-video=\"C2qkbYzbnOM\"",
+    "Smoke article</a>",
+    "assets/navigation.js",
+    "assets/navigation.css"
+  ],
+  "paths": [
+    "/wp-admin/edit.php?post_type=bnav_item&page=bnav-quick-add",
+    "/wp-admin/edit.php?post_type=bnav_item&page=bnav-import",
+    "/wp-admin/post-new.php?post_type=bnav_item",
+    "/wp-admin/edit-tags.php?taxonomy=bnav_book&post_type=bnav_item"
+  ]
+}

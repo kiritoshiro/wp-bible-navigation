@@ -34,10 +34,11 @@ Add the **Bible navigation** block to a page, or use the shortcode `[bible_navig
 
 ## Weight
 
-The page loads one stylesheet and one deferred script (about 1 KB each gzipped, 3 KB and 2.6 KB raw), and only on pages that show the list. Videos and audio load only when a visitor clicks them; until then the page makes no YouTube or audio requests. Each book is a collapsed `<details>` section. The HTML is cached and rebuilt after a link, a book or a tagged post changes.
+The page loads one stylesheet and one deferred script (minified in the release ZIP: 2.4 KB and 1.5 KB raw, under 1 KB each gzipped), and only on pages that show the list. Videos and audio load only when a visitor clicks them; until then the page makes no YouTube or audio requests. Each book is a collapsed `<details>` section. The HTML is cached and rebuilt after a link, a book or a tagged post changes.
 
 ## Development
 
+- `npm ci --ignore-scripts`, then `python3 scripts/build-release.py v0.0.0 --any-version`: a trial release ZIP in `dist/`. The build copies the plugin files to a staging folder and minifies `assets/*.js` and `assets/*.css` there with SWC and lightningcss (pinned in `package-lock.json`); it fails if Node or the minifier fails. The repository keeps the readable sources.
 - `php tests/run.php`: behaviour tests (link detection, escaping, importer, translations, updater).
 - `python3 .github/playground/smoke.py --php 8.4`: a throwaway WordPress in WordPress Playground (on Windows, set `PYTHONUTF8=1`).
 - Security and CI: see [docs/ci-checks.md](docs/ci-checks.md).

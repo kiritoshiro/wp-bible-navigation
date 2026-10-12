@@ -21,7 +21,7 @@ Its final job, **All security checks passed**, fails if any check failed, was ca
 
 ## CI
 
-`ci.yml` runs PHP lint, `tests/run.php` and the JavaScript syntax check on PHP 7.4 and 8.4, and builds a trial release ZIP.
+`ci.yml` runs PHP lint, `tests/run.php` and the JavaScript syntax check on PHP 7.4 and 8.4, and builds a trial release ZIP. The ZIP build needs Node 24 and `npm ci --ignore-scripts`: it minifies the packaged scripts and styles with SWC and lightningcss, and fails if that fails.
 
 ## Links
 

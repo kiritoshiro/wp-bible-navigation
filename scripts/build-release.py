@@ -3,10 +3,18 @@
 
 Usage: build-release.py vX.Y.Z [--any-version]
 --any-version skips the tag/header match (CI trial build only).
+
+The plugin files are copied to a temporary staging directory, where
+scripts/minify-package-assets.mjs minifies assets/*.js and assets/*.css
+(run `npm ci --ignore-scripts` first). The repository keeps the readable
+sources. The build fails if Node or the minifier fails.
 """
 from hashlib import sha256
 from pathlib import Path
+from shutil import copy2, which
+from subprocess import run
 from sys import argv
+from tempfile import TemporaryDirectory
 from zipfile import ZIP_DEFLATED, ZipFile
 import re
 
@@ -28,16 +36,35 @@ files += sorted((ROOT / "languages").glob("*.php"))
 if not all(path.is_file() for path in files) or len(files) < 12:
     raise SystemExit("A required plugin file is missing")
 
+node = which("node")
+if node is None:
+    raise SystemExit("Node.js is required to minify the packaged assets")
+
 out = ROOT / "dist"
 out.mkdir(exist_ok=True)
 archive = out / f"{SLUG}-{version}.zip"
-with ZipFile(archive, "w", ZIP_DEFLATED, compresslevel=9) as package:
-    for path in files:
-        package.write(path, f"{SLUG}/" + path.relative_to(ROOT).as_posix())
+checksum = out / f"{archive.name}.sha256"
+# A failed build must not leave an older ZIP behind under the same name.
+archive.unlink(missing_ok=True)
+checksum.unlink(missing_ok=True)
+with TemporaryDirectory() as tmp:
+    stage = Path(tmp) / SLUG
+    names = [path.relative_to(ROOT).as_posix() for path in files]
+    for name in names:
+        (stage / name).parent.mkdir(parents=True, exist_ok=True)
+        copy2(ROOT / name, stage / name)
+    minify = run([node, str(ROOT / "scripts" / "minify-package-assets.mjs"), str(stage)], cwd=ROOT)
+    if minify.returncode != 0:
+        raise SystemExit(f"Minifying the packaged assets failed (exit {minify.returncode})")
+    with ZipFile(archive, "w", ZIP_DEFLATED, compresslevel=9) as package:
+        for name in names:
+            package.write(stage / name, f"{SLUG}/{name}")
 digest = sha256(archive.read_bytes()).hexdigest()
-(out / f"{SLUG}-{version}.zip.sha256").write_text(f"{digest}  {archive.name}\n")
+checksum.write_bytes(f"{digest}  {archive.name}\n".encode())
 with ZipFile(archive) as package:
     if package.testzip() is not None:
         raise SystemExit("Corrupt ZIP")
-    names = package.namelist()
-print(f"Created {archive.name}: {len(names)} files, {archive.stat().st_size} bytes, sha256 {digest}")
+    packed = package.namelist()
+if packed != [f"{SLUG}/{name}" for name in names]:
+    raise SystemExit("The ZIP does not hold exactly the plugin files")
+print(f"Created {archive.name}: {len(packed)} files, {archive.stat().st_size} bytes, sha256 {digest}")

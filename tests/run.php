@@ -1,7 +1,7 @@
 <?php
 /* Small WordPress stubs exercise link detection, escaped output, the page importer and release gating. */
 define( 'ABSPATH', __DIR__ );
-define( 'BNAV_VERSION', '0.1.0' );
+define( 'BNAV_VERSION', '0.1.1' );
 define( 'BNAV_FILE', __DIR__ . '/../wp-bible-navigation.php' );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );

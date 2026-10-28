@@ -3,7 +3,7 @@
  * Plugin Name: Bible navigation
  * Plugin URI: https://github.com/kiritoshiro/wp-bible-navigation
  * Description: Bible study videos, audio and articles listed by Bible book, with counts.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: Adventistai
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BNAV_VERSION', '0.1.1' );
+define( 'BNAV_VERSION', '0.1.2' );
 define( 'BNAV_FILE', __FILE__ );
 
 require_once __DIR__ . '/includes/class-books.php';

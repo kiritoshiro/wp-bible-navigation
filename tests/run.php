@@ -35,6 +35,28 @@ class WP_Error { public $code; public function __construct( $code ) { $this->cod
 function download_url( $url, $timeout ) { $file = tempnam( sys_get_temp_dir(), 'bnav' ); file_put_contents( $file, 'tampered zip' ); return $file; }
 function wp_delete_file( $file ) { unlink( $file ); }
 
+/* Link items and the current user's rights for Bible_Navigation_Admin::add() and the import page. */
+$GLOBALS['caps']   = array(); // 'publish_posts', 'edit_post:7', 'read_post:7'…
+$GLOBALS['items']  = array(); // id => array( 'auto' => bool, 'terms' => int[] )
+$GLOBALS['writes'] = array(); // "function:id" for each change to a post
+$GLOBALS['pages']  = array();
+function current_user_can( $cap, $id = 0 ) { return in_array( $id ? "$cap:$id" : $cap, $GLOBALS['caps'], true ); }
+function url_to_postid( $url ) { return 0; }
+function get_posts( $args ) { return array_keys( $GLOBALS['items'] ); }
+function get_post_meta( $id, $key ) { return ! empty( $GLOBALS['items'][ $id ]['auto'] ); }
+function has_term( $term, $tax, $id ) { return in_array( $term, $GLOBALS['items'][ $id ]['terms'], true ); }
+function wp_update_post( $post ) { $GLOBALS['writes'][] = 'wp_update_post:' . $post['ID']; }
+function delete_post_meta( $id, $key ) { $GLOBALS['writes'][] = "delete_post_meta:$id"; }
+function wp_set_object_terms( $id, $term ) { $GLOBALS['writes'][] = "wp_set_object_terms:$id"; }
+function wp_insert_post( $post ) { $GLOBALS['writes'][] = 'wp_insert_post:100'; return 100; }
+function update_post_meta( $id, $key, $value ) {}
+function get_pages( $args ) { return $GLOBALS['pages']; }
+function wp_dropdown_pages( $args ) { $GLOBALS['dropdown'] = $args; }
+function wp_verify_nonce( $nonce, $action ) { return false; }
+function admin_url( $path ) { return 'https://example.test/wp-admin/' . $path; }
+function wp_nonce_field() {}
+function submit_button() {}
+
 $failures = 0;
 function check( $condition, $message ) {
 	global $failures;
@@ -177,6 +199,30 @@ check( 'Kitas straipsnis' === $by['pradzios-knyga'][3]['title'], 'link in text w
 check( 'https://www.youtube.com/watch?v=TQ-MzWRJNTU' === $by['pradzios-knyga'][4]['url'], '[embedyt] shortcode' );
 check( 'Garsas' === $by['laiskas-efezieciams'][1]['title'], 'audio block with caption' );
 check( ! in_array( 'https://www.youtube.com/watch?v=WPoGf6RPdDk', array_column( $found, 'url' ), true ), 'links under a group heading are ignored' );
+
+/* ---- Quick add and import change only link items the user may edit */
+$book = (object) array( 'term_id' => 5 );
+$add  = static function ( array $items, array $caps ) use ( $book ) {
+	$GLOBALS['items']  = $items;
+	$GLOBALS['caps']   = $caps;
+	$GLOBALS['writes'] = array();
+	$counts            = array( 'untitled' => 0 );
+	return Bible_Navigation_Admin::add( 'https://dievozodis.lt/x/', 'Better title', '', $book, '', $counts );
+};
+$theirs = array( 7 => array( 'auto' => true, 'terms' => array() ) );
+check( 'invalid' === $add( $theirs, array( 'read_post:7' ) ) && array() === $GLOBALS['writes'], "another user's public link is neither retitled nor put under the book" );
+check( 'added' === $add( $theirs, array() ) && array( 'wp_insert_post:100', 'wp_set_object_terms:100' ) === $GLOBALS['writes'], "another user's unreadable link is left alone and not revealed" );
+check( 'linked' === $add( $theirs, array( 'edit_post:7' ) ) && array( 'wp_update_post:7', 'delete_post_meta:7', 'wp_set_object_terms:7' ) === $GLOBALS['writes'], 'an editable link is retitled and put under the book' );
+check( 'linked' === $add( $theirs + array( 8 => array( 'auto' => false, 'terms' => array() ) ), array( 'read_post:7', 'edit_post:8' ) ) && array( 'wp_set_object_terms:8' ) === $GLOBALS['writes'], 'the editable one of several matching links is used' );
+check( 'skipped' === $add( array( 7 => array( 'auto' => false, 'terms' => array( 5 ) ) ), array( 'edit_post:7' ) ), 'an editable link already under the book is skipped' );
+
+/* ---- the import page lists only pages the user may edit */
+$GLOBALS['pages'] = array( (object) array( 'ID' => 3 ), (object) array( 'ID' => 4 ) );
+$GLOBALS['caps']  = array( 'publish_posts', 'edit_post:4' );
+ob_start();
+Bible_Navigation_Admin::import_page();
+ob_end_clean();
+check( array( 3 ) === $GLOBALS['dropdown']['exclude'] && false === $GLOBALS['dropdown']['hierarchical'], 'pages the user cannot edit are left out of the page list' );
 
 /* ---- translations: every PHP string has a Lithuanian translation */
 $l10n = include __DIR__ . '/../languages/wp-bible-navigation-lt_LT.l10n.php';

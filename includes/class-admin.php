@@ -337,33 +337,47 @@ final class Bible_Navigation_Admin {
 			wp_set_object_terms( $post_id, (int) $term->term_id, Bible_Navigation::BOOK, true );
 			return 'tagged';
 		}
-		$stored   = 'audio' === $entry['type'] ? $entry['src'] : $url;
-		$existing = get_posts(
+		$stored  = 'audio' === $entry['type'] ? $entry['src'] : $url;
+		$matches = get_posts(
 			array(
 				'post_type'   => Bible_Navigation::ITEM,
 				'post_status' => array( 'publish', 'draft', 'pending', 'private', 'future' ),
-				'numberposts' => 1,
+				'numberposts' => 20,
 				'fields'      => 'ids',
 				'meta_key'    => '_bnav_url', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Admin-only duplicate check.
 				'meta_value'  => $stored, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Admin-only duplicate check.
 			)
 		);
+		// Only a link the user may edit is changed. A link the user cannot even
+		// read is treated as absent, so the counts do not reveal it.
+		$existing = 0;
+		$readable = false;
+		foreach ( $matches as $match ) {
+			if ( current_user_can( 'edit_post', $match ) ) {
+				$existing = (int) $match;
+				break;
+			}
+			$readable = $readable || current_user_can( 'read_post', $match );
+		}
+		if ( ! $existing && $readable ) {
+			return 'invalid';
+		}
 		$title = Bible_Navigation::clean_title( $title );
 		if ( $existing ) {
 			// Running the import or Quick add again fills in stand-in titles.
-			if ( get_post_meta( $existing[0], '_bnav_auto_title', true ) ) {
+			if ( get_post_meta( $existing, '_bnav_auto_title', true ) ) {
 				$better = '' !== $title ? $title : self::title_in_budget( $url );
 				if ( '' !== $better ) {
-					wp_update_post( array( 'ID' => $existing[0], 'post_title' => $better ) );
-					delete_post_meta( $existing[0], '_bnav_auto_title' );
+					wp_update_post( array( 'ID' => $existing, 'post_title' => $better ) );
+					delete_post_meta( $existing, '_bnav_auto_title' );
 				} else {
 					++$counts['untitled'];
 				}
 			}
-			if ( has_term( (int) $term->term_id, Bible_Navigation::BOOK, $existing[0] ) ) {
+			if ( has_term( (int) $term->term_id, Bible_Navigation::BOOK, $existing ) ) {
 				return 'skipped';
 			}
-			wp_set_object_terms( $existing[0], (int) $term->term_id, Bible_Navigation::BOOK, true );
+			wp_set_object_terms( $existing, (int) $term->term_id, Bible_Navigation::BOOK, true );
 			return 'linked';
 		}
 		$auto = false;
@@ -451,13 +465,25 @@ final class Bible_Navigation_Admin {
 		echo '<input type="hidden" name="post_type" value="' . esc_attr( Bible_Navigation::ITEM ) . '"><input type="hidden" name="page" value="bnav-import">';
 		wp_nonce_field( 'bnav_preview', '_bnav_preview', false );
 		echo '<label for="bnav_page">' . esc_html__( 'Page', 'wp-bible-navigation' ) . '</label> ';
+		// Only pages the user may preview below; other users' draft titles stay hidden.
+		// Not hierarchical, so the user's own pages under a hidden parent are kept.
+		$pages  = array(
+			'post_status'  => array( 'publish', 'draft', 'private' ),
+			'hierarchical' => false,
+		);
+		$hidden = array();
+		foreach ( get_pages( $pages ) as $page ) {
+			if ( ! current_user_can( 'edit_post', $page->ID ) ) {
+				$hidden[] = (int) $page->ID;
+			}
+		}
 		wp_dropdown_pages(
-			array(
+			$pages + array( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Fixed statuses and a flag.
 				'name'             => 'bnav_page',
 				'id'               => 'bnav_page',
 				'selected'         => (int) $page_id,
 				'show_option_none' => esc_html__( '— Choose a page —', 'wp-bible-navigation' ),
-				'post_status'      => array( 'publish', 'draft', 'private' ),
+				'exclude'          => $hidden, // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Integer page IDs.
 			)
 		);
 		submit_button( __( 'Preview', 'wp-bible-navigation' ), 'secondary', '', false );
